@@ -1,0 +1,6 @@
+pandas
+ipykernel
+matplotlib
+scikit-learn
+seaborn
+notebook-as-pdf
