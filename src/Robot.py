@@ -1,0 +1,55 @@
+from MotorsController import MotorsController
+from LightsController import LightsController
+from MovementController import MovementController
+from MotorsController import Direction
+from Display import Display
+from neopixel import NeoPixel
+from machine import I2C, Pin, PWM
+from RobotStateMachine import RobotStateMachine, StartMoving, Stop, OnCross, TurningFinished, CollisionDetected, AllLinesLost
+from LineTracking import LineTracking
+
+
+class Robot:
+    def __init__(self, np: NeoPixel, i2c: I2C, left_motor_forward_pwm_pin: PWM, left_motor_backward_pwm_pin: PWM, right_motor_forward_pwm_pin: PWM, right_motor_backward_pwm_pin: PWM):
+        self.motors_controller = MotorsController(left_motor_forward_pwm_pin=left_motor_forward_pwm_pin, left_motor_backward_pwm_pin=left_motor_backward_pwm_pin,
+                                                  right_motor_forward_pwm_pin=right_motor_forward_pwm_pin, right_motor_backward_pwm_pin=right_motor_backward_pwm_pin)
+        self.lights_controller = LightsController(np)
+        self.display = Display(i2c=i2c)
+        self.robot_state_machine = RobotStateMachine(robot=self)
+        self.movement_controller = MovementController(
+            motors_controller=self.motors_controller, display=self.display, robot_state_machine=self.robot_state_machine)
+        self.line_tracking = LineTracking(
+            display=self.display, motors_controller=self.motors_controller, movement_controller=self.movement_controller, robot=self)
+        self.adaptive_cruise_control_enabled = False
+        self.follow_the_line_enabled = False
+        self.speed_regulation_enabled = False
+
+    def regulation(self, timer=None):
+        """
+        Perform various regulation tasks.
+        This is called periodically by the timer.
+        """
+        # Regulate pwm to achieve desired speed
+        if self.speed_regulation_enabled:
+            self.motors_controller.speed_regulation(
+                self.movement_controller.desired_direction, timer)
+
+        # Regulate speed with adaptive cruise control
+        if self.adaptive_cruise_control_enabled:
+            self.movement_controller.adaptive_cruise_control()
+
+        # Regulate speed with line tracking'
+        if self.follow_the_line_enabled:
+            self.line_tracking.correction_action()
+
+    def enable_adaptive_cruise_control(self, state: bool):
+        self.adaptive_cruise_control_enabled = state
+
+    def enable_follow_the_line(self, state: bool):
+        self.follow_the_line_enabled = state
+
+    def enable_speed_regulation(self, state: bool):
+        self.speed_regulation_enabled = state
+
+    def is_follow_the_line_enabled(self):
+        return self.follow_the_line_enabled
