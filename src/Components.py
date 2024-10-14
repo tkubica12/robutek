@@ -50,8 +50,8 @@ class Motor:
 
 class SpeedSensor:
     MIN_TIME_BETWEEN_EVENTS_US = 2000
-    SPEED_HISTORY_DEPTH = 8
-    MEDIAN_FILTER_WINDOW_SIZE = 3
+    SPEED_HISTORY_DEPTH = 1
+    MEDIAN_FILTER_WINDOW_SIZE = 1
     SPEED_THRESHOLD = 1
 
     def __init__(self, zero_speed_threshold: int, ticks_per_round: int):

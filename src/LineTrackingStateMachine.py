@@ -1,5 +1,6 @@
 from RobotStateMachine import OnCross
 from time import sleep_ms
+from machine import Timer
 
 # Define Events
 class LineTrackingEvent:
@@ -88,6 +89,7 @@ class InCenter(LineTrackingState):
 
     def on_exit(self):
         print("Exiting InCenter State")
+        self.line_tracking.display.show_message("", 2)
 
     def handle_event(self, event):
         if isinstance(event, LeftDetected):
@@ -108,6 +110,7 @@ class CorrectionLeft(LineTrackingState):
 
     def on_exit(self):
         print("Exiting CorrectionLeft State")
+        self.line_tracking.display.show_message("", 2)
 
     def handle_event(self, event):
         if isinstance(event, CenterDetected):
@@ -128,6 +131,7 @@ class CorrectionRight(LineTrackingState):
 
     def on_exit(self):
         print("Exiting CorrectionRight State")
+        self.line_tracking.display.show_message("", 2)
 
     def handle_event(self, event):
         if isinstance(event, CenterDetected):
@@ -149,6 +153,7 @@ class CrossCentering(LineTrackingState):
 
     def on_exit(self):
         print("Exiting CrossCentering State")
+        self.line_tracking.display.show_message("", 2)
 
     def handle_event(self, event):
         if isinstance(event, CrossDetected):
@@ -163,12 +168,21 @@ class CrossStopping(LineTrackingState):
         self.line_tracking.set_angular_velocity(0)
         self.line_tracking.stop_regulation()
         self.line_tracking.robot.enable_follow_the_line(False)
-        sleep_ms(3000)
+        print("Waiting 1 second")
 
+        # Set up a timer to handle the delay non-blocking
+        self.timer = Timer(-1)
+        self.timer.init(period=1000, mode=Timer.ONE_SHOT, callback=self.on_timer_complete)
+
+    def on_timer_complete(self, t):
         self.line_tracking.line_tracking_state_machine.handle_event(Stopped())
 
     def on_exit(self):
         print("Exiting CrossStopping State")
+        self.line_tracking.display.show_message("", 2)
+        # Deinitialize the timer if it exists
+        if hasattr(self, 'timer'):
+            self.timer.deinit()
 
     def handle_event(self, event):
         if isinstance(event, Stopped):

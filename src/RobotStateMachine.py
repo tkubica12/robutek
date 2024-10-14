@@ -104,7 +104,7 @@ class FollowTheLine(State):
         print("Entering Follow The Line State")
         self.robot.display.show_message("Follow line", 0)
         self.robot.enable_follow_the_line(True)
-        self.robot.enable_speed_regulation(False)
+        self.robot.enable_speed_regulation(True)
 
     def on_exit(self):
         print("Exiting Follow The Line State")
