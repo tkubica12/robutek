@@ -171,8 +171,8 @@ class CrossStopping(LineTrackingState):
         print("Waiting 1 second")
 
         # Set up a timer to handle the delay non-blocking
-        self.timer = Timer(-1)
-        self.timer.init(period=1000, mode=Timer.ONE_SHOT, callback=self.on_timer_complete)
+        self.timer = Timer(3)
+        self.timer.init(period=200, mode=Timer.ONE_SHOT, callback=self.on_timer_complete)
 
     def on_timer_complete(self, t):
         self.line_tracking.line_tracking_state_machine.handle_event(Stopped())

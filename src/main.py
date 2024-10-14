@@ -18,12 +18,16 @@ r = Robot(
 # Register timer callback for blinking lights
 # blinker = Timer(mode=Timer.PERIODIC, period=500, callback=r.lights_controller.process)
 
-# Register timer for movement actions
-movement_timer = Timer(0)
-movement_timer.init(mode=Timer.PERIODIC, period=50, callback=r.regulation)
+# Register timer for level 1 regulation
+movement_timer_level1 = Timer(0)
+movement_timer_level1.init(mode=Timer.PERIODIC, period=50, callback=r.regulation_level1)  # This is just due to encoder issues, should be much smaller
+
+# Register timer for level 2 regulation
+movement_timer_level2 = Timer(1)
+movement_timer_level2.init(mode=Timer.PERIODIC, period=10, callback=r.regulation_level2)
 
 # Register timer for measurements
-measurement_timer = Timer(1)
+measurement_timer = Timer(2)
 measurement_timer.init(mode=Timer.PERIODIC, period=5, callback=r.movement_controller.measurements)
 
 # Register callbacks for speed sensors
