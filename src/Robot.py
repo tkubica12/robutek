@@ -24,9 +24,10 @@ class Robot:
         self.follow_the_line_enabled = False
         self.speed_regulation_enabled = False
 
-    def regulation(self, timer=None):
+    def regulation_level1(self, timer=None):
         """
-        Perform various regulation tasks.
+        Perform various regulation tasks on Level 1.
+        This should be fastest regulation level, typically for speed regulation.
         This is called periodically by the timer.
         """
         # Regulate pwm to achieve desired speed
@@ -34,6 +35,12 @@ class Robot:
             self.motors_controller.speed_regulation(
                 self.movement_controller.desired_direction, timer)
 
+    def regulation_level2(self, timer=None):
+        """
+        Perform various regulation tasks on Level 2.
+        This should be 5x slower level, typically for higher level stuff such as cruise control or line trackinf.
+        This is called periodically by the timer.
+        """
         # Regulate speed with adaptive cruise control
         if self.adaptive_cruise_control_enabled:
             self.movement_controller.adaptive_cruise_control()
