@@ -19,8 +19,8 @@ r = Robot(
 # blinker = Timer(mode=Timer.PERIODIC, period=500, callback=r.lights_controller.process)
 
 # Register timer for level 1 regulation
-movement_timer_level1 = Timer(0)
-movement_timer_level1.init(mode=Timer.PERIODIC, period=50, callback=r.regulation_level1)  # This is just due to encoder issues, should be much smaller
+# movement_timer_level1 = Timer(0)
+# movement_timer_level1.init(mode=Timer.PERIODIC, period=50, callback=r.regulation_level1)  # This is just due to encoder issues, should be much smaller
 
 # Register timer for level 2 regulation
 movement_timer_level2 = Timer(1)
@@ -46,12 +46,12 @@ right_tracking_sensor.irq(trigger=Pin.IRQ_RISING | Pin.IRQ_FALLING, handler=r.li
 
 # Features configuration
 r.enable_adaptive_cruise_control(False)
-# r.enable_follow_the_line(False)
-# r.enable_speed_regulation(True)
+r.enable_follow_the_line(False)
+r.enable_speed_regulation(False)
 
 sleep_ms(5000)
 
-r.robot_state_machine.handle_event(StartMoving(0.30, Direction.FORWARD))
+r.robot_state_machine.handle_event(StartMoving(0.43, Direction.FORWARD))
 
 # r.movement_controller.motors_controller.stationary_turn(0.5, TurnDirection.CLOCKWISE)
 # r.movement_controller.drive_desired_state(0.25, Direction.FORWARD)
