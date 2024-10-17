@@ -1,4 +1,5 @@
-from RobotStateMachine import OnCross
+from RobotStateMachine import OnCross, DistanceReached
+from MotorsController import Direction
 from time import sleep_ms
 from machine import Timer
 
@@ -71,6 +72,16 @@ class LineTrackingState:
     def handle_event(self, event):
         pass
 
+class FollowTheLineInactive(LineTrackingState):
+    def on_enter(self):
+        print("Entering FollowTheLineInactive State")
+
+    def on_exit(self):
+        print("Exiting FollowTheLineInactive State")
+
+    def handle_event(self, event):
+        return self
+
 class InCenter(LineTrackingState):
     _instance = None
 
@@ -104,7 +115,7 @@ class CorrectionLeft(LineTrackingState):
     def on_enter(self):
         print("Entering CorrectionLeft State")
         self.line_tracking.display.show_message("Correction Left", 2)
-        self.line_tracking.set_angular_velocity(-1.3)
+        self.line_tracking.set_angular_velocity(-1.0)
         self.line_tracking.start_regulation()
         self.line_tracking.correction_action()
 
@@ -125,7 +136,7 @@ class CorrectionRight(LineTrackingState):
     def on_enter(self):
         print("Entering CorrectionRight State")
         self.line_tracking.display.show_message("Correction Right", 2)
-        self.line_tracking.set_angular_velocity(1.3)
+        self.line_tracking.set_angular_velocity(1.0)
         self.line_tracking.start_regulation()
         self.line_tracking.correction_action()
 
@@ -145,11 +156,13 @@ class CorrectionRight(LineTrackingState):
 class CrossCentering(LineTrackingState):
     def on_enter(self):
         print("Entering CrossCentering State")
-        if self.line_tracking.is_on_cross():
-            self.line_tracking.robot.robot_state_machine.handle_event(OnCross())
-        else:
-            self.line_tracking.display.show_message("Cross Centering", 2)
-            self.line_tracking.drive_back_to_cross()
+        self.line_tracking.center_to_cross()
+        # if self.line_tracking.is_on_cross():
+        #     self.line_tracking.display.show_message("Cross Centering", 2)
+        #     self.line_tracking.center_to_cross()
+        # else:
+        #     self.line_tracking.display.show_message("Cross overshoot", 2)
+        #     self.line_tracking.drive_back_to_cross()
 
     def on_exit(self):
         print("Exiting CrossCentering State")
@@ -158,6 +171,10 @@ class CrossCentering(LineTrackingState):
     def handle_event(self, event):
         if isinstance(event, CrossDetected):
             self.on_enter()
+        if isinstance(event, DistanceReached):
+            self.line_tracking.movement_controller.drive_desired_state(0, Direction.FORWARD)
+            self.line_tracking.robot.robot_state_machine.handle_event(OnCross())
+            return FollowTheLineInactive(self.line_tracking)
         return self
 
 class CrossStopping(LineTrackingState):
@@ -168,7 +185,6 @@ class CrossStopping(LineTrackingState):
         self.line_tracking.set_angular_velocity(0)
         self.line_tracking.stop_regulation()
         self.line_tracking.robot.enable_follow_the_line(False)
-        print("Waiting 1 second")
 
         # Set up a timer to handle the delay non-blocking
         self.timer = Timer(3)

@@ -1,4 +1,4 @@
-from MotorsController import Direction
+from MotorsController import Direction, TurnDirection
 from time import sleep_ms
 
 # Define Events
@@ -54,6 +54,12 @@ class DistanceReached(Event):
     """
     pass
 
+class RobotCenterDetected(Event):
+    """
+    Event is triggered when the center line is detected and line tracking is disabled.
+    """
+    pass
+
 # Define States
 class State:
     def __init__(self, robot):
@@ -104,7 +110,7 @@ class FollowTheLine(State):
         print("Entering Follow The Line State")
         self.robot.display.show_message("Follow line", 0)
         self.robot.enable_follow_the_line(True)
-        self.robot.enable_speed_regulation(True)
+        self.robot.enable_speed_regulation(False)
 
     def on_exit(self):
         print("Exiting Follow The Line State")
@@ -116,6 +122,10 @@ class FollowTheLine(State):
             return HandleCrossing(self.robot)
         elif isinstance(event, StartMoving):
             self.robot.movement_controller.drive_desired_state(event.speed, event.direction)
+            return self
+        elif isinstance(event, DistanceReached):
+            # Pass this event to LineTrackingStateMachine
+            self.robot.line_tracking.line_tracking_state_machine.handle_event(event)
             return self
         return self
 
@@ -132,28 +142,21 @@ class HandleCrossing(State):
     def on_enter(self):
         print("Entering Handle Crossing State")
         self.robot.display.show_message("Handle crossing", 0)
-
-        # Stop the robot
-        self.robot.display.show_message("Stop", 1)
         self.robot.enable_follow_the_line(False)
-        self.robot.movement_controller.drive_desired_state(0, Direction.FORWARD)
-        # sleep_ms(1000)
-
-        # # Ask to drive until distance is reached
-        # # self.robot.enable_speed_regulation(True)
-        # self.robot.display.show_message("Go to cross", 1)
-        # self.robot.movement_controller.register_distance_reached_alarm(self.DISTANCE_SENSORS_TO_CENTER)
-        # self.robot.movement_controller.drive_desired_state(0.25, Direction.FORWARD)
+        self.robot.display.show_message("Turning", 1)
+        self.robot.motors_controller.stationary_turn(0.5, TurnDirection.COUNTER_CLOCKWISE)
 
     def on_exit(self):
         print("Exiting Handle Crossing State")
 
     def handle_event(self, event):
         if isinstance(event, TurningFinished):
-            return FollowTheLine(self.robot)
-        elif isinstance(event, DistanceReached):
+            pass
+            # return FollowTheLine(self.robot)
+        elif isinstance(event, RobotCenterDetected):
+            self.robot.display.show_message("Back on line", 1)
             self.robot.movement_controller.drive_desired_state(0, Direction.FORWARD)
-            self.robot.display.show_message("On the cross", 1)
+            return Idle(self.robot)
         return self
 
 class EmergencyState(State):
@@ -181,6 +184,7 @@ class RobotStateMachine:
         self.state.on_enter()
 
     def handle_event(self, event):
+        print(f"Handling event of type: {type(event).__name__}")
         if isinstance(event, EmergencyEvent):
             new_state = EmergencyState(self.robot)
         else:
