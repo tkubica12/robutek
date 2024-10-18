@@ -98,8 +98,8 @@ class HandleCrossing(State):
         self.robot.display.show_message("Handle crossing", 0)
         self.robot.enable_follow_the_line(False)
         self.robot.display.show_message("Turning", 1)
-        self.robot.movement_controller.register_turning_angle_reached_alarm(45)
-        self.robot.motors_controller.stationary_turn(0.6, TurnDirection.COUNTER_CLOCKWISE)
+        self.robot.movement_controller.register_turning_angle_reached_alarm(30)
+        self.robot.motors_controller.stationary_turn(0.5, TurnDirection.COUNTER_CLOCKWISE)
 
     def on_exit(self):
         print("Exiting Handle Crossing State")
@@ -107,7 +107,7 @@ class HandleCrossing(State):
     def handle_event(self, event):
         if isinstance(event, TurningAngleReached):
             self.line_detections_enabled = True
-            self.robot.motors_controller.stationary_turn(0.4, TurnDirection.COUNTER_CLOCKWISE)
+            self.robot.motors_controller.stationary_turn(0.35, TurnDirection.COUNTER_CLOCKWISE)
             return self
         elif isinstance(event, LeftDetected):
             if self.line_detections_enabled:

@@ -89,26 +89,26 @@ class LineTracking:
     def is_on_cross(self):
         """
         Check if the robot is on a cross.
-        We calculate either sensors that currently see the line or went off within the correlation window.
-        At this point I keep it as 3 to detect crossing - this cannot handle T-crossing yet.
+        Two checks are performed:
+            1. At least two sensors are detecting the line at the same time.
+            2. All three sensors are detecting the line within a correlation window.
         """
         current_time = ticks_ms()
         left = Pin(21, Pin.IN, Pin.PULL_DOWN).value()
         center = Pin(22, Pin.IN, Pin.PULL_DOWN).value()
         right = Pin(23, Pin.IN, Pin.PULL_DOWN).value()
 
-        sensors_detecting = sum([
+        # Sensor detection within correlation window
+        sensors_detecting_with_correlation = sum([
             left or ticks_diff(current_time, self.left_sensor_last_change) < self.CROSS_DETECTION_CORRELATION_WINDOW,
             center or ticks_diff(current_time, self.center_sensor_last_change) < self.CROSS_DETECTION_CORRELATION_WINDOW,
             right or ticks_diff(current_time, self.right_sensor_last_change) < self.CROSS_DETECTION_CORRELATION_WINDOW
         ])
 
-        # if sensors_detecting >= 3:
-        #     print(f"Left: {left} time diff: {ticks_diff(current_time, self.left_sensor_last_change)}")
-        #     print(f"Center: {center} time diff: {ticks_diff(current_time, self.center_sensor_last_change)}")
-        #     print(f"Right: {right} time diff: {ticks_diff(current_time, self.right_sensor_last_change)}")
+        # Sensor detection
+        sensors_detecting = sum([left, center, right])
 
-        return sensors_detecting >= 3
+        return sensors_detecting >= 2 or sensors_detecting_with_correlation >= 3
 
     def cross_detection(self):
         """
