@@ -129,8 +129,7 @@ class LineTracking:
         Center the robot on the cross.
         """
         self.movement_controller.register_distance_reached_alarm(self.DISTANCE_SENSORS_TO_CENTER)
-        self.movement_controller.drive_desired_state(
-            desired_speed=self.CENTERING_SPEED, direction=Direction.FORWARD)
+        self.movement_controller.drive_desired_state(desired_speed=self.CENTERING_SPEED, direction=Direction.FORWARD)
 
     def left_sensor_to_event(self, pin):
         """

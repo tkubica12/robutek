@@ -28,17 +28,24 @@ class Stop(Event):
     """
     pass
 
-class TurningFinished(Event):
-    """
-    Event is triggered when robot finishes turning
-    """
-    pass
+# class TurningFinished(Event):
+#     """
+#     Event is triggered when robot finishes turning
+#     """
+#     pass
 
 class DistanceReached(Event):
     """
     You can register alert so this event is triggered when set distance is reached.
     This can be used for example to stop the robot after reaching certain distance, 
     eg. to travel distance between line sensors and center of wheels.
+    """
+    pass
+
+class TurningAngleReached(Event):
+    """
+    You can register alert so this event is triggered when stationary turn angle.
+    This can be used for example to stop the robot after reaching certain turning angle.
     """
     pass
 
