@@ -3,7 +3,7 @@ from neopixel import NeoPixel
 from Robot import Robot
 from MotorsController import Direction, TurnDirection
 from time import sleep_ms
-from RobotStateMachineStates import StartMoving, Stop, OnCross, TurningFinished, CollisionDetected, AllLinesLost
+from RobotStateMachineStates import *
 
 # Create instance of Robot
 r = Robot(

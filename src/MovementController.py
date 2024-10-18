@@ -3,7 +3,7 @@ from MotorsController import MotorsController, Direction
 from Display import Display
 from machine import Pin
 from machine import I2C
-from RobotStateMachineStates import RobotStateMachine, DistanceReached
+from RobotStateMachineStates import *
 
 class MovementController:
     """
@@ -40,6 +40,9 @@ class MovementController:
         self.distance_reached_alarm_start = 0
         self.distance_reached_alarm_target = 0
         self.distance_reached_alarm_set = False
+        self.turning_angle_reached_alarm_set = False
+        self.turning_angle_reached_alarm_start = 0
+        self.turning_angle_reached_alarm_target = 0
 
     def drive_desired_state(self, desired_speed: float, direction: Direction):
         """
@@ -97,6 +100,12 @@ class MovementController:
                 self.robot_state_machine.handle_event(DistanceReached())
                 self.distance_reached_alarm_set = False
 
+        if self.turning_angle_reached_alarm_set:
+            # Check if the turning angle is reached
+            if self.motors_controller.left_speed_sensor.radians_counter >= self.turning_angle_reached_alarm_target:
+                self.robot_state_machine.handle_event(TurningAngleReached())
+                self.turning_angle_reached_alarm_set = False
+
     def register_distance_reached_alarm(self, distance: float):
         """
         Fire DistanceReached event when the distance is reached.
@@ -110,3 +119,19 @@ class MovementController:
         # Calculate radians required to travel the distance (we will simply sum from both wheels)
         distance_radians = distance / self.motors_controller.WHEEL_DIAMETER
         self.distance_reached_alarm_target = self.distance_reached_alarm_start + distance_radians*2
+
+    def register_turning_angle_reached_alarm(self, angle: float):
+        """
+        Fire TurningAngleReached event when the turning angle is reached.
+        """
+        ANGLE_FOR_RADIAN = 19
+
+        # Set alarm
+        self.turning_angle_reached_alarm_set = True
+
+        # Store the current radians counters for one wheel
+        self.turning_angle_reached_alarm_start = self.motors_controller.left_speed_sensor.radians_counter
+
+        # Calculate radians required to turn the angle (we will simply sum from both wheels)
+        angle_radians = angle / ANGLE_FOR_RADIAN
+        self.turning_angle_reached_alarm_target = self.turning_angle_reached_alarm_start + angle_radians

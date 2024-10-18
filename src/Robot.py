@@ -5,7 +5,7 @@ from MotorsController import Direction
 from Display import Display
 from neopixel import NeoPixel
 from machine import I2C, Pin, PWM
-from RobotStateMachineStates import RobotStateMachine, StartMoving, Stop, OnCross, TurningFinished, CollisionDetected, AllLinesLost
+from RobotStateMachineStates import *
 from LineTracking import LineTracking
 
 
@@ -45,7 +45,7 @@ class Robot:
         if self.adaptive_cruise_control_enabled:
             self.movement_controller.adaptive_cruise_control()
 
-        # Regulate speed with line tracking'
+        # Regulate speed with line tracking
         if self.follow_the_line_enabled:
             self.line_tracking.correction_action()
 

@@ -94,25 +94,32 @@ class HandleCrossing(State):
 
     def on_enter(self):
         print("Entering Handle Crossing State")
+        self.line_detections_enabled = False
         self.robot.display.show_message("Handle crossing", 0)
         self.robot.enable_follow_the_line(False)
         self.robot.display.show_message("Turning", 1)
-        self.robot.motors_controller.stationary_turn(0.4, TurnDirection.COUNTER_CLOCKWISE)
+        self.robot.movement_controller.register_turning_angle_reached_alarm(45)
+        self.robot.motors_controller.stationary_turn(0.6, TurnDirection.COUNTER_CLOCKWISE)
 
     def on_exit(self):
         print("Exiting Handle Crossing State")
 
     def handle_event(self, event):
-        if isinstance(event, TurningFinished):
-            pass
-            # return FollowTheLine(self.robot)
+        if isinstance(event, TurningAngleReached):
+            self.line_detections_enabled = True
+            self.robot.motors_controller.stationary_turn(0.4, TurnDirection.COUNTER_CLOCKWISE)
+            return self
         elif isinstance(event, LeftDetected):
-            self.robot.motors_controller.stationary_turn(0.25, TurnDirection.COUNTER_CLOCKWISE)
+            if self.line_detections_enabled:
+                self.robot.motors_controller.stationary_turn(0.25, TurnDirection.COUNTER_CLOCKWISE)
             return self
         elif isinstance(event, CenterDetected):
-            self.robot.display.show_message("Back on line", 1)
-            self.robot.movement_controller.drive_desired_state(0, Direction.FORWARD)
-            return Idle(self.robot)
+            if self.line_detections_enabled:
+                self.robot.display.show_message("", 1)
+                self.robot.movement_controller.drive_desired_state(0.43, Direction.FORWARD)
+                return FollowTheLine(self.robot)
+            else:
+                return self
         return self
 
 class EmergencyState(State):
