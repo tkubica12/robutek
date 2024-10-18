@@ -1,4 +1,4 @@
-from RobotStateMachine import OnCross, DistanceReached
+from RobotStateMachineStates import OnCross, DistanceReached
 from MotorsController import Direction
 from time import sleep_ms
 from machine import Timer

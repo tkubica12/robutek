@@ -5,7 +5,7 @@ from MotorsController import Direction
 from Display import Display
 from neopixel import NeoPixel
 from machine import I2C, Pin, PWM
-from RobotStateMachine import RobotStateMachine, StartMoving, Stop, OnCross, TurningFinished, CollisionDetected, AllLinesLost
+from RobotStateMachineStates import RobotStateMachine, StartMoving, Stop, OnCross, TurningFinished, CollisionDetected, AllLinesLost
 from LineTracking import LineTracking
 
 
