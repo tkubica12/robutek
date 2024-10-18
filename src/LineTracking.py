@@ -1,29 +1,17 @@
-from LineTrackingStateMachine import (
-    LineTrackingStateMachine,
-    InCenter,
-    CorrectionLeft,
-    CorrectionRight,
-    CenterDetected,
-    LeftDetected,
-    RightDetected,
-    CenterLost,
-    LeftLost,
-    RightLost,
-    CrossDetected,
-)
-
 from Display import Display
 from MotorsController import MotorsController
 from MovementController import MovementController
 from time import ticks_ms, ticks_diff, sleep_ms
-from RobotStateMachine import OnCross, RobotCenterDetected
+from RobotStateMachineStates import *
+from RobotStateMachineEvents import *
 from MotorsController import Direction
 from machine import Pin
+
 
 class LineTracking:
     P = 0.001
     MAX_ANGULAR_VELOCITY = 2.5
-    CROSS_DETECTION_CORRELATION_WINDOW = 30
+    CROSS_DETECTION_CORRELATION_WINDOW = 50
     CENTERING_SPEED = 0.27
     DISTANCE_SENSORS_TO_CENTER = 0.03
 
@@ -33,13 +21,13 @@ class LineTracking:
         self.motors_controller = motors_controller
         self.movement_controller = movement_controller
         self.robot = robot
-        self.line_tracking_state_machine = LineTrackingStateMachine(self)
         self.left_tracking_sensor_current = False
         self.center_tracking_sensor_current = False
         self.right_tracking_sensor_current = False
         self.left_sensor_last_change = 0
         self.center_sensor_last_change = 0
         self.right_sensor_last_change = 0
+        self.is_regulating = False
 
     def set_angular_velocity(self, angular_velocity):
         """
@@ -70,12 +58,13 @@ class LineTracking:
             regulation_correction = self.P * elapsed_time
             if self.follow_the_line_angular_velocity > 0:
                 self.follow_the_line_angular_velocity += regulation_correction
-                self.follow_the_line_angular_velocity = min(self.follow_the_line_angular_velocity, self.MAX_ANGULAR_VELOCITY)
+                self.follow_the_line_angular_velocity = min(
+                    self.follow_the_line_angular_velocity, self.MAX_ANGULAR_VELOCITY)
             else:
                 self.follow_the_line_angular_velocity -= regulation_correction
-                self.follow_the_line_angular_velocity = max(self.follow_the_line_angular_velocity, -self.MAX_ANGULAR_VELOCITY)
+                self.follow_the_line_angular_velocity = max(
+                    self.follow_the_line_angular_velocity, -self.MAX_ANGULAR_VELOCITY)
             self.follow_the_line_drive()
-            
 
     def follow_the_line_drive(self):
         """
@@ -103,17 +92,21 @@ class LineTracking:
         We calculate either sensors that currently see the line or went off within the correlation window.
         At this point I keep it as 3 to detect crossing - this cannot handle T-crossing yet.
         """
+        current_time = ticks_ms()
+        left = Pin(21, Pin.IN, Pin.PULL_DOWN).value()
+        center = Pin(22, Pin.IN, Pin.PULL_DOWN).value()
+        right = Pin(23, Pin.IN, Pin.PULL_DOWN).value()
+
         sensors_detecting = sum([
-            self.left_tracking_sensor_current or ticks_diff(ticks_ms(), self.left_sensor_last_change) < self.CROSS_DETECTION_CORRELATION_WINDOW,
-            self.center_tracking_sensor_current or ticks_diff(ticks_ms(), self.center_sensor_last_change) < self.CROSS_DETECTION_CORRELATION_WINDOW,
-            self.right_tracking_sensor_current or ticks_diff(ticks_ms(), self.right_sensor_last_change) < self.CROSS_DETECTION_CORRELATION_WINDOW
+            left or ticks_diff(current_time, self.left_sensor_last_change) < self.CROSS_DETECTION_CORRELATION_WINDOW,
+            center or ticks_diff(current_time, self.center_sensor_last_change) < self.CROSS_DETECTION_CORRELATION_WINDOW,
+            right or ticks_diff(current_time, self.right_sensor_last_change) < self.CROSS_DETECTION_CORRELATION_WINDOW
         ])
 
         # if sensors_detecting >= 3:
-        #     print(f"Left: {self.left_tracking_sensor_current} time diff: {ticks_diff(ticks_ms(), self.left_sensor_last_change)}")
-        #     print(f"Center: {self.center_tracking_sensor_current} time diff: {ticks_diff(ticks_ms(), self.center_sensor_last_change)}")
-        #     print(f"Right: {self.right_tracking_sensor_current} time diff: {ticks_diff(ticks_ms(), self.right_sensor_last_change)}")
-        #     print(f"Sum: {sum([self.left_tracking_sensor_current or ticks_diff(ticks_ms(), self.left_sensor_last_change) < self.CROSS_DETECTION_CORRELATION_WINDOW, self.center_tracking_sensor_current or ticks_diff(ticks_ms(), self.center_sensor_last_change) < self.CROSS_DETECTION_CORRELATION_WINDOW, self.right_tracking_sensor_current or ticks_diff(ticks_ms(), self.right_sensor_last_change) < self.CROSS_DETECTION_CORRELATION_WINDOW])}")
+        #     print(f"Left: {left} time diff: {ticks_diff(current_time, self.left_sensor_last_change)}")
+        #     print(f"Center: {center} time diff: {ticks_diff(current_time, self.center_sensor_last_change)}")
+        #     print(f"Right: {right} time diff: {ticks_diff(current_time, self.right_sensor_last_change)}")
 
         return sensors_detecting >= 3
 
@@ -122,20 +115,22 @@ class LineTracking:
         Check sensor values for cross detection.
         """
         if self.is_on_cross():
-            self.line_tracking_state_machine.handle_event(CrossDetected())
+            self.robot.robot_state_machine.handle_event(CrossDetected())
 
     def drive_back_to_cross(self):
         """
         Drive the robot slowly backward so we can detect the cross we have overshoot.
         """
-        self.movement_controller.drive_desired_state(desired_speed=self.CENTERING_SPEED, direction=Direction.BACKWARD)
+        self.movement_controller.drive_desired_state(
+            desired_speed=self.CENTERING_SPEED, direction=Direction.BACKWARD)
 
     def center_to_cross(self):
         """
         Center the robot on the cross.
         """
         self.movement_controller.register_distance_reached_alarm(self.DISTANCE_SENSORS_TO_CENTER)
-        self.movement_controller.drive_desired_state(desired_speed=self.CENTERING_SPEED, direction=Direction.FORWARD)
+        self.movement_controller.drive_desired_state(
+            desired_speed=self.CENTERING_SPEED, direction=Direction.FORWARD)
 
     def left_sensor_to_event(self, pin):
         """
@@ -150,11 +145,10 @@ class LineTracking:
             self.cross_detection()
 
             # Generate event for the state machine
-            if self.robot.is_follow_the_line_enabled():
-                if self.left_tracking_sensor_current:
-                    self.line_tracking_state_machine.handle_event(LeftDetected())
-                else:
-                    self.line_tracking_state_machine.handle_event(LeftLost())
+            if self.left_tracking_sensor_current:
+                self.robot.robot_state_machine.handle_event(LeftDetected())
+            else:
+                self.robot.robot_state_machine.handle_event(LeftLost())
 
     def center_sensor_to_event(self, pin):
         """
@@ -169,14 +163,10 @@ class LineTracking:
             self.cross_detection()
 
             # Generate event for the state machine
-            if self.robot.is_follow_the_line_enabled():   # When line tracking is enabled, handle this in line tracking state machine
-                if self.center_tracking_sensor_current:
-                    self.line_tracking_state_machine.handle_event(CenterDetected())
-                else:
-                    self.line_tracking_state_machine.handle_event(CenterLost())
-            else:  # When line tracking is disabled, handle this in robot state machine
-                if self.center_tracking_sensor_current:
-                    self.robot.robot_state_machine.handle_event(RobotCenterDetected())
+            if self.center_tracking_sensor_current:
+                self.robot.robot_state_machine.handle_event(CenterDetected())
+            else:
+                self.robot.robot_state_machine.handle_event(CenterLost())
 
     def right_sensor_to_event(self, pin):
         """
@@ -191,8 +181,7 @@ class LineTracking:
             self.cross_detection()
 
             # Generate event for the state machine
-            if self.robot.is_follow_the_line_enabled():
-                if self.right_tracking_sensor_current:
-                    self.line_tracking_state_machine.handle_event(RightDetected())
-                else:
-                    self.line_tracking_state_machine.handle_event(RightLost())
+            if self.right_tracking_sensor_current:
+                self.robot.robot_state_machine.handle_event(RightDetected())
+            else:
+                self.robot.robot_state_machine.handle_event(RightLost())

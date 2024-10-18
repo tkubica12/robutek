@@ -3,7 +3,7 @@ from MotorsController import MotorsController, Direction
 from Display import Display
 from machine import Pin
 from machine import I2C
-from RobotStateMachine import RobotStateMachine, DistanceReached
+from RobotStateMachineStates import RobotStateMachine, DistanceReached
 
 class MovementController:
     """
