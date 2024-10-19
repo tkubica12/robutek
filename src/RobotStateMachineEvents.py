@@ -109,3 +109,6 @@ class CollisionDetected(EmergencyEvent):
 
 class AllLinesLost(EmergencyEvent):
     pass
+
+class NoPathActionsLeft(EmergencyEvent):
+    pass

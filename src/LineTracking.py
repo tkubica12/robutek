@@ -9,10 +9,10 @@ from machine import Pin
 
 
 class LineTracking:
-    P = 0.001
-    MAX_ANGULAR_VELOCITY = 2.5
+    P = 0.0008
+    MAX_ANGULAR_VELOCITY = 1.0
     CROSS_DETECTION_CORRELATION_WINDOW = 50
-    CENTERING_SPEED = 0.27
+    CENTERING_SPEED = 0.35
     DISTANCE_SENSORS_TO_CENTER = 0.03
 
     def __init__(self, display: Display, motors_controller: MotorsController, movement_controller: MovementController, robot):
