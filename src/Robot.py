@@ -7,10 +7,10 @@ from neopixel import NeoPixel
 from machine import I2C, Pin, PWM
 from RobotStateMachineStates import *
 from LineTracking import LineTracking
-
+from Path import Path, PathAction
 
 class Robot:
-    def __init__(self, np: NeoPixel, i2c: I2C, left_motor_forward_pwm_pin: PWM, left_motor_backward_pwm_pin: PWM, right_motor_forward_pwm_pin: PWM, right_motor_backward_pwm_pin: PWM):
+    def __init__(self, np: NeoPixel, i2c: I2C, left_motor_forward_pwm_pin: PWM, left_motor_backward_pwm_pin: PWM, right_motor_forward_pwm_pin: PWM, right_motor_backward_pwm_pin: PWM, path_actions: list[PathAction] = []):
         self.motors_controller = MotorsController(left_motor_forward_pwm_pin=left_motor_forward_pwm_pin, left_motor_backward_pwm_pin=left_motor_backward_pwm_pin,
                                                   right_motor_forward_pwm_pin=right_motor_forward_pwm_pin, right_motor_backward_pwm_pin=right_motor_backward_pwm_pin)
         self.lights_controller = LightsController(np)
@@ -20,6 +20,7 @@ class Robot:
             motors_controller=self.motors_controller, display=self.display, robot_state_machine=self.robot_state_machine)
         self.line_tracking = LineTracking(
             display=self.display, motors_controller=self.motors_controller, movement_controller=self.movement_controller, robot=self)
+        self.path = Path(path_actions=path_actions)
         self.adaptive_cruise_control_enabled = False
         self.follow_the_line_enabled = False
         self.speed_regulation_enabled = False
@@ -60,3 +61,4 @@ class Robot:
 
     def is_follow_the_line_enabled(self):
         return self.follow_the_line_enabled
+    

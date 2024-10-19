@@ -4,6 +4,24 @@ from Robot import Robot
 from MotorsController import Direction, TurnDirection
 from time import sleep_ms
 from RobotStateMachineStates import *
+from Path import Path, PathAction
+
+# Planned path actions
+path_actions = [
+    PathAction.TURN_LEFT, 
+    PathAction.TURN_RIGHT, 
+    PathAction.TURN_RIGHT, 
+    PathAction.GO_STRAIGHT,
+    PathAction.TURN_RIGHT, 
+    PathAction.GO_STRAIGHT,
+    PathAction.GO_STRAIGHT,
+    PathAction.TURN_LEFT, 
+    PathAction.TURN_LEFT, 
+    PathAction.TURN_LEFT, 
+    PathAction.TURN_LEFT, 
+    PathAction.GO_STRAIGHT,
+    PathAction.GO_STRAIGHT,
+    ]
 
 # Create instance of Robot
 r = Robot(
@@ -12,7 +30,8 @@ r = Robot(
     left_motor_forward_pwm_pin = PWM(Pin(26), freq=2000),
     left_motor_backward_pwm_pin = PWM(Pin(27), freq=2000),
     right_motor_forward_pwm_pin = PWM(Pin(25), freq=2000),
-    right_motor_backward_pwm_pin = PWM(Pin(33), freq=2000)
+    right_motor_backward_pwm_pin = PWM(Pin(33), freq=2000),
+    path_actions = path_actions
 )
 
 # Register timer callback for blinking lights
@@ -51,7 +70,7 @@ r.enable_speed_regulation(False)
 
 sleep_ms(5000)
 
-r.robot_state_machine.handle_event(StartMoving(0.43, Direction.FORWARD))
+r.robot_state_machine.handle_event(StartMoving(0.35, Direction.FORWARD))
 
 # r.movement_controller.motors_controller.stationary_turn(0.5, TurnDirection.CLOCKWISE)
 # r.movement_controller.drive_desired_state(0.25, Direction.FORWARD)
