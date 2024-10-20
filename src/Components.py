@@ -143,20 +143,20 @@ class CollisionSensor:
         pass  # Implement the logic to detect collision
 
 
-class TrackingSensors:
-    def __init__(self, i2c: I2C, hw_address):
-        self.i2c = i2c
-        self.hw_address = hw_address
+# class TrackingSensors:
+#     def __init__(self, i2c: I2C, hw_address):
+#         self.i2c = i2c
+#         self.hw_address = hw_address
 
-    def is_on_line(self):
-        raw_data = self.i2c.readfrom(self.hw_address, 1)
-        raw_data_int = int.from_bytes(raw_data, 'big')
-        binary_string = '{:08b}'.format(raw_data_int)
-        bit_array = [int(bit) for bit in binary_string]
-        output = {
-            "left": bit_array[5] == 1,    # 1 means on black line so return True
-            "center": bit_array[4] == 1,
-            "right": bit_array[3] == 1
-        }
-        return output
+#     def is_on_line(self):
+#         raw_data = self.i2c.readfrom(self.hw_address, 1)
+#         raw_data_int = int.from_bytes(raw_data, 'big')
+#         binary_string = '{:08b}'.format(raw_data_int)
+#         bit_array = [int(bit) for bit in binary_string]
+#         output = {
+#             "left": bit_array[5] == 1,    # 1 means on black line so return True
+#             "center": bit_array[4] == 1,
+#             "right": bit_array[3] == 1
+#         }
+#         return output
     
