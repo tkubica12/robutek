@@ -5,6 +5,7 @@ from MotorsController import Direction, TurnDirection
 from time import sleep_ms
 from RobotStateMachineStates import *
 from Path import Path, PathAction
+from Configuration import CONFIG
 
 # Planned path actions
 path_actions = [
@@ -70,7 +71,7 @@ r.enable_speed_regulation(False)
 
 sleep_ms(5000)
 
-r.robot_state_machine.handle_event(StartMoving(0.35, Direction.FORWARD))
+r.robot_state_machine.handle_event(StartMoving(CONFIG["DEMO_FORWARD_SPEED"], Direction.FORWARD))
 
 # r.movement_controller.motors_controller.stationary_turn(0.5, TurnDirection.CLOCKWISE)
 # r.movement_controller.drive_desired_state(0.25, Direction.FORWARD)

@@ -6,15 +6,10 @@ from RobotStateMachineStates import *
 from RobotStateMachineEvents import *
 from MotorsController import Direction
 from machine import Pin
+from Configuration import CONFIG
 
 
 class LineTracking:
-    P = 0.0008
-    MAX_ANGULAR_VELOCITY = 1.0
-    CROSS_DETECTION_CORRELATION_WINDOW = 50
-    CENTERING_SPEED = 0.35
-    DISTANCE_SENSORS_TO_CENTER = 0.03
-
     def __init__(self, display: Display, motors_controller: MotorsController, movement_controller: MovementController, robot):
         self.follow_the_line_angular_velocity = 0
         self.display = display
@@ -55,15 +50,15 @@ class LineTracking:
         if self.is_regulating:
             current_time = ticks_ms()
             elapsed_time = ticks_diff(current_time, self.regulation_start_time)
-            regulation_correction = self.P * elapsed_time
+            regulation_correction = CONFIG["LINE_TRACKING_P"] * elapsed_time
             if self.follow_the_line_angular_velocity > 0:
                 self.follow_the_line_angular_velocity += regulation_correction
                 self.follow_the_line_angular_velocity = min(
-                    self.follow_the_line_angular_velocity, self.MAX_ANGULAR_VELOCITY)
+                    self.follow_the_line_angular_velocity, CONFIG["MAX_ANGULAR_VELOCITY"])
             else:
                 self.follow_the_line_angular_velocity -= regulation_correction
                 self.follow_the_line_angular_velocity = max(
-                    self.follow_the_line_angular_velocity, -self.MAX_ANGULAR_VELOCITY)
+                    self.follow_the_line_angular_velocity, -CONFIG["MAX_ANGULAR_VELOCITY"])
             self.follow_the_line_drive()
 
     def follow_the_line_drive(self):
@@ -100,9 +95,9 @@ class LineTracking:
 
         # Sensor detection within correlation window
         sensors_detecting_with_correlation = sum([
-            left or ticks_diff(current_time, self.left_sensor_last_change) < self.CROSS_DETECTION_CORRELATION_WINDOW,
-            center or ticks_diff(current_time, self.center_sensor_last_change) < self.CROSS_DETECTION_CORRELATION_WINDOW,
-            right or ticks_diff(current_time, self.right_sensor_last_change) < self.CROSS_DETECTION_CORRELATION_WINDOW
+            left or ticks_diff(current_time, self.left_sensor_last_change) < CONFIG["CROSS_DETECTION_CORRELATION_WINDOW"],
+            center or ticks_diff(current_time, self.center_sensor_last_change) < CONFIG["CROSS_DETECTION_CORRELATION_WINDOW"],
+            right or ticks_diff(current_time, self.right_sensor_last_change) < CONFIG["CROSS_DETECTION_CORRELATION_WINDOW"]
         ])
 
         # Sensor detection
@@ -122,14 +117,14 @@ class LineTracking:
         Drive the robot slowly backward so we can detect the cross we have overshoot.
         """
         self.movement_controller.drive_desired_state(
-            desired_speed=self.CENTERING_SPEED, direction=Direction.BACKWARD)
+            desired_speed=CONFIG["CENTERING_SPEED"], direction=Direction.BACKWARD)
 
     def center_to_cross(self):
         """
         Center the robot on the cross.
         """
-        self.movement_controller.register_distance_reached_alarm(self.DISTANCE_SENSORS_TO_CENTER)
-        self.movement_controller.drive_desired_state(desired_speed=self.CENTERING_SPEED, direction=Direction.FORWARD)
+        self.movement_controller.register_distance_reached_alarm(CONFIG["DISTANCE_SENSORS_TO_CENTER"])
+        self.movement_controller.drive_desired_state(desired_speed=CONFIG["CENTERING_SPEED"], direction=Direction.FORWARD)
 
     def left_sensor_to_event(self, pin):
         """

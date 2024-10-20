@@ -4,19 +4,13 @@ from Display import Display
 from machine import Pin
 from machine import I2C
 from RobotStateMachineStates import *
+from Configuration import CONFIG
 
 class MovementController:
     """
     Class that handles the movement control of the robot.
     This includes speed adjustments such as adaptive cruise control or collision detection.
-    TBD: Carrot-chasing algorithm
-    TBD: Line-following algorithm
     """
-    STOP_DISTANCE = 0.2
-    REACTION_POINT = 0.6
-    FOLLOW_THE_LINE_MAX_RADIUS = 0.25
-    FOLLOW_THE_LINE_MIN_RADIUS = 0.08
-    FOLLOW_THE_LINE_CHANGE_RATE = 0.9
 
     def __init__(self, motors_controller: MotorsController, display: Display, robot_state_machine: RobotStateMachine):
         self.motors_controller = motors_controller
@@ -36,7 +30,6 @@ class MovementController:
         self.left_tracking_current = False
         self.center_tracking_current = False
         self.right_tracking_current = False
-        self.follow_the_line_current_radius = self.FOLLOW_THE_LINE_MAX_RADIUS
         self.distance_reached_alarm_start = 0
         self.distance_reached_alarm_target = 0
         self.distance_reached_alarm_set = False
@@ -67,13 +60,13 @@ class MovementController:
         measured_distance = self.central_ultrasonic_sensor.measure_distance()
 
         # Proportional gain should be scaled from 0 at stop distance to desired speed at reaction point
-        proportional_gain = self.desired_speed/(self.REACTION_POINT - self.STOP_DISTANCE)
+        proportional_gain = self.desired_speed/(CONFIG["ACC_REACTION_POINT"] - CONFIG["ACC_STOP_DISTANCE"])
 
         # Proportional gain should be scaled from 0 at stop distance to desired speed at zero distance
-        proportional_gain_backward = self.desired_speed/self.STOP_DISTANCE
+        proportional_gain_backward = self.desired_speed/CONFIG["ACC_STOP_DISTANCE"]
 
         # Calculate the error and get adjusted speed
-        error = self.STOP_DISTANCE - measured_distance
+        error = CONFIG["ACC_STOP_DISTANCE"] - measured_distance
         desired_direction = self.desired_direction
         if error <= 0:
             adjusted_speed = min(-proportional_gain * error, self.desired_speed)

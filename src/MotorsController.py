@@ -2,6 +2,7 @@ from Components import Motor, SpeedSensor
 from machine import I2C, Pin, ADC, PWM
 from utime import sleep_ms
 from random import randint
+from Configuration import CONFIG
 
 class Direction:
     FORWARD = "forward"
@@ -15,28 +16,18 @@ class MotorsController():
     """
     Class that handles the motor control of the robot.
     This includes speed to PWM calculations, calibration and speed regulation based on sensor feedback.
-    TBD: Implement stationary turns
-    TBD: Implement curved drive based on speed difference of wheels
     """
-    CALIBRATION_DEFAULT_SLOPE = 2631.466
-    CALIBRATION_DEFAULT_INTERCEPT = 16635.92
-    WHEEL_DIAMETER = 0.065
-    WHEEL_HOLES = 20
-    WHEEL_BASE_DISTANCE = 0.15
-    PROPORTIONAL_GAIN = 512
-    VOLTAGE_PIN_NUMBER = 28
-    MIN_DRIVE_PWM = 18000
 
     def __init__(self, left_motor_forward_pwm_pin: PWM, left_motor_backward_pwm_pin: PWM, right_motor_forward_pwm_pin: PWM, right_motor_backward_pwm_pin: PWM):
         # Instantiate the motors and speed sensors
         self.left_motor = Motor(left_motor_forward_pwm_pin, left_motor_backward_pwm_pin)
         self.right_motor = Motor(right_motor_forward_pwm_pin, right_motor_backward_pwm_pin)
-        self.left_speed_sensor = SpeedSensor(0, self.WHEEL_HOLES*2)
-        self.right_speed_sensor = SpeedSensor(0, self.WHEEL_HOLES*2)
+        self.left_speed_sensor = SpeedSensor(0, CONFIG["WHEEL_HOLES"]*2)
+        self.right_speed_sensor = SpeedSensor(0, CONFIG["WHEEL_HOLES"]*2)
 
         # Initialize the calibration parameters
-        self.slope = self.CALIBRATION_DEFAULT_SLOPE
-        self.intercept = self.CALIBRATION_DEFAULT_INTERCEPT
+        self.slope = CONFIG["CALIBRATION_DEFAULT_SLOPE"]
+        self.intercept = CONFIG["CALIBRATION_DEFAULT_INTERCEPT"]
 
         # Initialize variables
         self.desired_speed_radians = 0
@@ -57,11 +48,11 @@ class MotorsController():
         This might be called by movement controller to change actual speed 
         when desired cannot be achieved due to collision avoidance or adaptive cruise control.
         """
-        self.desired_speed_radians = speed / (self.WHEEL_DIAMETER / 2)
-        self.right_desired_speed = speed - (self.WHEEL_BASE_DISTANCE / 2) * angular_velocity
-        self.left_desired_speed = speed + (self.WHEEL_BASE_DISTANCE / 2) * angular_velocity
-        self.right_desired_speed_radians = self.right_desired_speed / (self.WHEEL_DIAMETER / 2)
-        self.left_desired_speed_radians = self.left_desired_speed / (self.WHEEL_DIAMETER / 2)
+        self.desired_speed_radians = speed / (CONFIG["WHEEL_DIAMETER"] / 2)
+        self.right_desired_speed = speed - (CONFIG["WHEEL_BASE_DISTANCE"] / 2) * angular_velocity
+        self.left_desired_speed = speed + (CONFIG["WHEEL_BASE_DISTANCE"] / 2) * angular_velocity
+        self.right_desired_speed_radians = self.right_desired_speed / (CONFIG["WHEEL_DIAMETER"] / 2)
+        self.left_desired_speed_radians = self.left_desired_speed / (CONFIG["WHEEL_DIAMETER"] / 2)
         right_predicted_pwm = self.predict_pwm(self.right_desired_speed_radians)
         left_predicted_pwm = self.predict_pwm(self.left_desired_speed_radians)
 
@@ -96,28 +87,28 @@ class MotorsController():
         motor.forward(0)
         self.create_linear_model(radians_values, step_size)
 
-    def calibrate_advanced(self, motor: Motor, speed_sensor: SpeedSensor, file_name):
-        """
-        Gather data for advanced calibration and store it in a file.
-        Measure steady state voltage of the system with each PWM value and speed it produces.
-        To get variety of data points we randomize PWM rather than going sequentially.
-        Steady voltage (no motors running) reading and PWM to speed values are stored in a file.
-        File is used outside of device to calculate ML model.
-        """
-        print("Calibrating motor...")
-        voltage_pin = ADC(Pin(self.VOLTAGE_PIN_NUMBER, Pin.IN))
-        with open(file_name, "w") as file:
-            file.write(f"pwm,voltage,speed\n")
-            while True:   # Do until batteries die
-                voltage = 3.3 * voltage_pin.read_u16() / 65535
-                pwm = randint(0, 255)
-                motor.forward(pwm)
-                sleep_ms(3000)
-                speed = speed_sensor.get_speed_radians()
-                print(f"pwm: {pwm}, voltage: {voltage}, speed: {speed}")
-                file.write(f"{pwm},{voltage},{speed}\n")
-                motor.forward(0)
-                sleep_ms(200)
+    # def calibrate_advanced(self, motor: Motor, speed_sensor: SpeedSensor, file_name):
+    #     """
+    #     Gather data for advanced calibration and store it in a file.
+    #     Measure steady state voltage of the system with each PWM value and speed it produces.
+    #     To get variety of data points we randomize PWM rather than going sequentially.
+    #     Steady voltage (no motors running) reading and PWM to speed values are stored in a file.
+    #     File is used outside of device to calculate ML model.
+    #     """
+    #     print("Calibrating motor...")
+    #     voltage_pin = ADC(Pin(self.VOLTAGE_PIN_NUMBER, Pin.IN))
+    #     with open(file_name, "w") as file:
+    #         file.write(f"pwm,voltage,speed\n")
+    #         while True:   # Do until batteries die
+    #             voltage = 3.3 * voltage_pin.read_u16() / 65535
+    #             pwm = randint(0, 255)
+    #             motor.forward(pwm)
+    #             sleep_ms(3000)
+    #             speed = speed_sensor.get_speed_radians()
+    #             print(f"pwm: {pwm}, voltage: {voltage}, speed: {speed}")
+    #             file.write(f"{pwm},{voltage},{speed}\n")
+    #             motor.forward(0)
+    #             sleep_ms(200)
 
     def create_linear_model(self, radians_values, step_size):
         """"
@@ -149,7 +140,7 @@ class MotorsController():
         Predict the PWM value for a given speed in radians per second.
         """
         pwm_value = round(self.slope * radians + self.intercept)
-        if pwm_value < self.MIN_DRIVE_PWM or radians == 0:
+        if pwm_value < CONFIG["MIN_DRIVE_PWM"] or radians == 0:
             return 0
         elif pwm_value > 65535:
             return 65535
@@ -181,7 +172,7 @@ class MotorsController():
         error = desired_speed_radians - speed
 
         # Calculate the control action and update the PWM
-        control_action = round(self.PROPORTIONAL_GAIN * error)
+        control_action = round(CONFIG["SPEED_REGULATION_P"] * error)
         pwm = pwm + control_action
 
         # Cap the PWM value at 65535
@@ -216,7 +207,7 @@ class MotorsController():
         """
         Perform a stationary turn.
         """
-        self.desired_speed_radians = speed / (self.WHEEL_DIAMETER / 2)
+        self.desired_speed_radians = speed / (CONFIG["WHEEL_DIAMETER"] / 2)
         right_predicted_pwm = self.predict_pwm(self.desired_speed_radians)
         left_predicted_pwm = self.predict_pwm(self.desired_speed_radians)
 

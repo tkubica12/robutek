@@ -3,6 +3,7 @@ from time import sleep_ms
 from RobotStateMachineEvents import *
 from machine import Timer
 from Path import Path, PathAction
+from Configuration import CONFIG
 
 # Define States
 class State:
@@ -92,7 +93,6 @@ class HandleCrossing(State):
     Handling the crossing such as turning left, right or going straight/
     """
     _instance = None
-    DISTANCE_SENSORS_TO_CENTER = 0.03
 
     def __new__(cls, robot):
         if cls._instance is None:
@@ -127,31 +127,31 @@ class HandleCrossing(State):
 
     def start_turning(self, turn_direction):
         self.robot.movement_controller.register_turning_angle_reached_alarm(30)
-        self.robot.motors_controller.stationary_turn(0.35, turn_direction)
+        self.robot.motors_controller.stationary_turn(CONFIG["TURNING_INITIAL_SPEED"], turn_direction)
 
     def move_over_cross(self):
-        self.movement_controller.register_distance_reached_alarm(0.05)
-        self.movement_controller.drive_desired_state(desired_speed=0.35, direction=Direction.FORWARD)
+        self.movement_controller.register_distance_reached_alarm(CONFIG["MOVE_OVER_CROSS_DISTANCE"])
+        self.movement_controller.drive_desired_state(desired_speed=CONFIG["MOVE_OVER_CROSS_SPEED"], direction=Direction.FORWARD)
 
     def handle_event(self, event):
         if isinstance(event, TurningAngleReached):  # Initial turning finished, slow down, start detecting lines
             self.line_detections_enabled = True
-            self.robot.motors_controller.stationary_turn(0.35, self.turn_direction)
+            self.robot.motors_controller.stationary_turn(CONFIG["TURNING_NORMAL_SPEED"], self.turn_direction)
             return self
         elif isinstance(event, LeftDetected) or isinstance(event, RightDetected):   # Left or Right line detected, significantly slow down
             if self.line_detections_enabled:
-                self.robot.motors_controller.stationary_turn(0.35, self.turn_direction)
+                self.robot.motors_controller.stationary_turn(CONFIG["TURNING_REDUCED_SPEED"], self.turn_direction)
             return self
         elif isinstance(event, CenterDetected):  # Center line detected, turning finished
             if self.line_detections_enabled:
                 self.robot.display.show_message("", 1)
-                self.robot.movement_controller.drive_desired_state(0.35, Direction.FORWARD)
+                self.robot.movement_controller.drive_desired_state(CONFIG["DEMO_FORWARD_SPEED"], Direction.FORWARD)
                 return FollowTheLine(self.robot)
             else:
                 return self
         elif isinstance(event, DistanceReached):  # Distance reached, moved over the cross
             self.robot.display.show_message("", 1)
-            self.robot.movement_controller.drive_desired_state(0.35, Direction.FORWARD)
+            self.robot.movement_controller.drive_desired_state(CONFIG["DEMO_FORWARD_SPEED"], Direction.FORWARD)
             return FollowTheLine(self.robot)
         return self
 
@@ -182,7 +182,7 @@ class CorrectionLeft(State):
     def on_enter(self):
         print("Entering CorrectionLeft State")
         self.robot.line_tracking.display.show_message("Correction Left", 2)
-        self.robot.line_tracking.set_angular_velocity(-0.4)
+        self.robot.line_tracking.set_angular_velocity(-CONFIG["INITIAL_ANGULAR_VELOCITY"])
         self.robot.line_tracking.start_regulation()
         self.robot.line_tracking.correction_action()
 
@@ -206,7 +206,7 @@ class CorrectionRight(State):
     def on_enter(self):
         print("Entering CorrectionRight State")
         self.robot.line_tracking.display.show_message("Correction Right", 2)
-        self.robot.line_tracking.set_angular_velocity(0.4)
+        self.robot.line_tracking.set_angular_velocity(CONFIG["INITIAL_ANGULAR_VELOCITY"])
         self.robot.line_tracking.start_regulation()
         self.robot.line_tracking.correction_action()
 
