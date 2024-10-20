@@ -32,11 +32,13 @@ class Idle(State):
         return cls._instance
 
     def on_enter(self):
-        print("Entering Idle State")
+        if CONFIG["LOG_LEVEL"] >= 1:
+            print("Entering Idle State")
         self.robot.display.show_message("Idle", 0)
 
     def on_exit(self):
-        print("Exiting Idle State")
+        if CONFIG["LOG_LEVEL"] >= 1:
+            print("Exiting Idle State")
 
     def handle_event(self, event):
         if isinstance(event, StartMoving):
@@ -58,7 +60,8 @@ class FollowTheLine(State):
         return cls._instance
 
     def on_enter(self):
-        print("Entering Follow The Line State")
+        if CONFIG["LOG_LEVEL"] >= 1:
+            print("Entering Follow The Line State")
         self.robot.display.show_message("Follow line", 0)
         self.robot.enable_follow_the_line(True)
         self.robot.enable_speed_regulation(False)
@@ -68,7 +71,8 @@ class FollowTheLine(State):
         self.robot.line_tracking.follow_the_line_drive()
 
     def on_exit(self):
-        print("Exiting Follow The Line State")
+        if CONFIG["LOG_LEVEL"] >= 1:
+            print("Exiting Follow The Line State")
 
     def handle_event(self, event):
         if isinstance(event, LeftDetected):
@@ -101,7 +105,8 @@ class HandleCrossing(State):
         return cls._instance
 
     def on_enter(self):
-        print("Entering Handle Crossing State")
+        if CONFIG["LOG_LEVEL"] >= 1:
+            print("Entering Handle Crossing State")
         self.line_detections_enabled = False
         self.robot.display.show_message("Handle crossing", 0)
         self.robot.enable_follow_the_line(False)
@@ -123,7 +128,8 @@ class HandleCrossing(State):
             self.robot.robot_state_machine.handle_event(NoPathActionsLeft())
 
     def on_exit(self):
-        print("Exiting Handle Crossing State")
+        if CONFIG["LOG_LEVEL"] >= 1:
+            print("Exiting Handle Crossing State")
 
     def start_turning(self, turn_direction):
         self.robot.movement_controller.register_turning_angle_reached_alarm(30)
@@ -168,7 +174,8 @@ class EmergencyState(State):
         return cls._instance
 
     def on_enter(self):
-        print("Entering Emergency State")
+        if CONFIG["LOG_LEVEL"] >= 1:
+            print("Entering Emergency State")
         self.robot.movement_controller.drive_desired_state(0, Direction.FORWARD)
 
     def handle_event(self, event):
@@ -180,14 +187,16 @@ class CorrectionLeft(State):
     Correcting the robot to the left.
     """
     def on_enter(self):
-        print("Entering CorrectionLeft State")
+        if CONFIG["LOG_LEVEL"] >= 1:
+            print("Entering CorrectionLeft State")
         self.robot.line_tracking.display.show_message("Correction Left", 2)
         self.robot.line_tracking.set_angular_velocity(-CONFIG["INITIAL_ANGULAR_VELOCITY"])
         self.robot.line_tracking.start_regulation()
         self.robot.line_tracking.correction_action()
 
     def on_exit(self):
-        print("Exiting CorrectionLeft State")
+        if CONFIG["LOG_LEVEL"] >= 1:
+            print("Exiting CorrectionLeft State")
         self.robot.line_tracking.display.show_message("", 2)
 
     def handle_event(self, event):
@@ -204,14 +213,16 @@ class CorrectionRight(State):
     Correcting the robot to the right.
     """
     def on_enter(self):
-        print("Entering CorrectionRight State")
+        if CONFIG["LOG_LEVEL"] >= 1:
+            print("Entering CorrectionRight State")
         self.robot.line_tracking.display.show_message("Correction Right", 2)
         self.robot.line_tracking.set_angular_velocity(CONFIG["INITIAL_ANGULAR_VELOCITY"])
         self.robot.line_tracking.start_regulation()
         self.robot.line_tracking.correction_action()
 
     def on_exit(self):
-        print("Exiting CorrectionRight State")
+        if CONFIG["LOG_LEVEL"] >= 1:
+            print("Exiting CorrectionRight State")
         self.robot.line_tracking.display.show_message("", 2)
 
     def handle_event(self, event):
@@ -228,7 +239,8 @@ class CrossCentering(State):
     Centering the robot on the cross.
     """
     def on_enter(self):
-        print("Entering CrossCentering State")
+        if CONFIG["LOG_LEVEL"] >= 1:
+            print("Entering CrossCentering State")
         self.robot.line_tracking.center_to_cross()
         # if self.robot.line_tracking.is_on_cross():
         #     self.robot.line_tracking.display.show_message("Cross Centering", 2)
@@ -238,7 +250,8 @@ class CrossCentering(State):
         #     self.robot.line_tracking.drive_back_to_cross()
 
     def on_exit(self):
-        print("Exiting CrossCentering State")
+        if CONFIG["LOG_LEVEL"] >= 1:
+            print("Exiting CrossCentering State")
         self.robot.line_tracking.display.show_message("", 2)
 
     def handle_event(self, event):
@@ -254,7 +267,8 @@ class CrossStopping(State):
     Stopping the robot on the cross.
     """
     def on_enter(self):
-        print("Entering CrossStopping State")
+        if CONFIG["LOG_LEVEL"] >= 1:
+            print("Entering CrossStopping State")
         self.robot.line_tracking.stop()
         self.robot.line_tracking.display.show_message("Cross Stopping", 2)
         self.robot.line_tracking.set_angular_velocity(0)
@@ -269,7 +283,8 @@ class CrossStopping(State):
         self.robot.robot_state_machine.handle_event(Stopped())
 
     def on_exit(self):
-        print("Exiting CrossStopping State")
+        if CONFIG["LOG_LEVEL"] >= 1:
+            print("Exiting CrossStopping State")
         self.robot.line_tracking.display.show_message("", 2)
         # Deinitialize the timer if it exists
         if hasattr(self, 'timer'):
@@ -289,7 +304,8 @@ class RobotStateMachine:
         self.state.on_enter()
 
     def handle_event(self, event):
-        print(f"Handling event of type: {type(event).__name__}")
+        if CONFIG["LOG_LEVEL"] >= 1:
+            print(f"Handling event of type: {type(event).__name__}")
         if isinstance(event, EmergencyEvent):
             new_state = EmergencyState(self.robot)
         else:

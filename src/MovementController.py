@@ -1,4 +1,4 @@
-from Components import UltrasonicSensor, CollisionSensor, TrackingSensors
+from Components import UltrasonicSensor, CollisionSensor
 from MotorsController import MotorsController, Direction
 from Display import Display
 from machine import Pin
@@ -77,7 +77,8 @@ class MovementController:
             else:
                 desired_direction = Direction.FORWARD
 
-        # print(f"Measured distance: {measured_distance}, adjusted speed: {adjusted_speed}")
+        if CONFIG["LOG_LEVEL"] >= 2:
+            print(f"Measured distance: {measured_distance}, adjusted speed: {adjusted_speed}")
 
         # Drive the robot with adjusted values (without changing desired speed as decided by user)
         self.motors_controller.drive(adjusted_speed, desired_direction)
@@ -110,7 +111,7 @@ class MovementController:
         self.distance_reached_alarm_start = self.motors_controller.left_speed_sensor.radians_counter + self.motors_controller.right_speed_sensor.radians_counter
 
         # Calculate radians required to travel the distance (we will simply sum from both wheels)
-        distance_radians = distance / self.motors_controller.WHEEL_DIAMETER
+        distance_radians = distance / CONFIG["WHEEL_DIAMETER"]
         self.distance_reached_alarm_target = self.distance_reached_alarm_start + distance_radians*2
 
     def register_turning_angle_reached_alarm(self, angle: float):

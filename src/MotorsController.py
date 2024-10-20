@@ -67,9 +67,10 @@ class MotorsController():
             self.right_motor.backward(right_predicted_pwm)
             self.left_motor.backward(left_predicted_pwm)
 
-        # print(f"Speed: {speed}, desired_speed_radians: {self.desired_speed_radians}, angular_velocity: {angular_velocity}, left_desired_speed: {self.left_desired_speed}, right_desired_speed: {self.right_desired_speed}")
-        # print(f"left_pwm: {self.left_pwm}, right_pwm: {self.right_pwm}")
-        # print(f"left_desired_speed_radians: {self.left_desired_speed_radians}, right_desired_speed_radians: {self.right_desired_speed_radians}")
+        if CONFIG["LOG_LEVEL"] >= 2:
+            print(f"Speed: {speed}, desired_speed_radians: {self.desired_speed_radians}, angular_velocity: {angular_velocity}, left_desired_speed: {self.left_desired_speed}, right_desired_speed: {self.right_desired_speed}")
+            print(f"left_pwm: {self.left_pwm}, right_pwm: {self.right_pwm}")
+            print(f"left_desired_speed_radians: {self.left_desired_speed_radians}, right_desired_speed_radians: {self.right_desired_speed_radians}")
 
     def calibrate(self, motor: Motor, speed_sensor: SpeedSensor, sleep = 1000, step_size = 128):
         """
@@ -191,8 +192,8 @@ class MotorsController():
                 motor.forward(pwm)
             else:
                 motor.backward(pwm)
-
-        # print(f"Speed: {speed}, Desired speed: {desired_speed_radians}, Error: {error}, Control action: {control_action}, PWM: {pwm}")
+        if CONFIG["LOG_LEVEL"] >= 2:
+            print(f"Speed: {speed}, Desired speed: {desired_speed_radians}, Error: {error}, Control action: {control_action}, PWM: {pwm}")
 
         return pwm
 
