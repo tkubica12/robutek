@@ -26,7 +26,7 @@ path_actions = [
 
 # Create instance of Robot
 r = Robot(
-    np = NeoPixel(Pin(23),8),
+    np = NeoPixel(Pin(14),8),
     i2c = I2C(0, sda=Pin(19), scl=Pin(18), freq=400000),
     left_motor_forward_pwm_pin = PWM(Pin(26), freq=2000),
     left_motor_backward_pwm_pin = PWM(Pin(27), freq=2000),
