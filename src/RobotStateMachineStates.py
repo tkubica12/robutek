@@ -63,6 +63,7 @@ class FollowTheLine(State):
         if CONFIG["LOG_LEVEL"] >= 1:
             print("Entering Follow The Line State")
         self.robot.display.show_message("Follow line", 0)
+        self.robot.lights_controller.main_on()
         self.robot.enable_follow_the_line(True)
         self.robot.enable_speed_regulation(False)
         self.robot.line_tracking.display.show_message("In Center", 2)
@@ -114,10 +115,12 @@ class HandleCrossing(State):
         # Decide based on next action in the list
         next_action = self.robot.path.next_action()
         if next_action == PathAction.TURN_LEFT:
+            self.robot.lights_controller.left_blinker_on()
             self.turn_direction = TurnDirection.COUNTER_CLOCKWISE
             self.robot.display.show_message("Turning left", 1)
             self.start_turning(self.turn_direction)
         elif next_action == PathAction.TURN_RIGHT:
+            self.robot.lights_controller.right_blinker_on()
             self.turn_direction = TurnDirection.CLOCKWISE
             self.robot.display.show_message("Turning right", 1)
             self.start_turning(self.turn_direction)
@@ -128,6 +131,8 @@ class HandleCrossing(State):
             self.robot.robot_state_machine.handle_event(NoPathActionsLeft())
 
     def on_exit(self):
+        self.robot.lights_controller.left_blinker_off()
+        self.robot.lights_controller.right_blinker_off()
         if CONFIG["LOG_LEVEL"] >= 1:
             print("Exiting Handle Crossing State")
 
@@ -174,6 +179,7 @@ class EmergencyState(State):
         return cls._instance
 
     def on_enter(self):
+        self.robot.lights_controller.hazard_on()
         if CONFIG["LOG_LEVEL"] >= 1:
             print("Entering Emergency State")
         self.robot.movement_controller.drive_desired_state(0, Direction.FORWARD)
@@ -267,6 +273,7 @@ class CrossStopping(State):
     Stopping the robot on the cross.
     """
     def on_enter(self):
+        self.robot.lights_controller.break_on()
         if CONFIG["LOG_LEVEL"] >= 1:
             print("Entering CrossStopping State")
         self.robot.line_tracking.stop()
@@ -283,6 +290,7 @@ class CrossStopping(State):
         self.robot.robot_state_machine.handle_event(Stopped())
 
     def on_exit(self):
+        self.robot.lights_controller.break_off()
         if CONFIG["LOG_LEVEL"] >= 1:
             print("Exiting CrossStopping State")
         self.robot.line_tracking.display.show_message("", 2)
