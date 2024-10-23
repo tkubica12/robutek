@@ -10,18 +10,13 @@ from Configuration import CONFIG
 # Planned path actions
 path_actions = [
     PathAction.TURN_LEFT, 
-    PathAction.TURN_RIGHT, 
-    PathAction.TURN_RIGHT, 
     PathAction.GO_STRAIGHT,
     PathAction.TURN_RIGHT, 
+    PathAction.TURN_RIGHT, 
     PathAction.GO_STRAIGHT,
     PathAction.GO_STRAIGHT,
-    PathAction.TURN_LEFT, 
-    PathAction.TURN_LEFT, 
-    PathAction.TURN_LEFT, 
-    PathAction.TURN_LEFT, 
-    PathAction.GO_STRAIGHT,
-    PathAction.GO_STRAIGHT,
+    PathAction.TURN_RIGHT, 
+    PathAction.TURN_RIGHT, 
     ]
 
 # Create instance of Robot
@@ -36,7 +31,8 @@ r = Robot(
 )
 
 # Register timer callback for blinking lights
-# blinker = Timer(mode=Timer.PERIODIC, period=500, callback=r.lights_controller.process)
+movement_timer_blinker = Timer(0)
+movement_timer_blinker.init(mode=Timer.PERIODIC, period=500, callback=r.lights_controller.process)
 
 # Register timer for level 1 regulation
 # movement_timer_level1 = Timer(0)
@@ -44,7 +40,7 @@ r = Robot(
 
 # Register timer for level 2 regulation
 movement_timer_level2 = Timer(1)
-movement_timer_level2.init(mode=Timer.PERIODIC, period=10, callback=r.regulation_level2)
+movement_timer_level2.init(mode=Timer.PERIODIC, period=2, callback=r.regulation_level2)
 
 # Register timer for measurements
 measurement_timer = Timer(2)
@@ -57,12 +53,14 @@ left_speed_sensor.irq(trigger=Pin.IRQ_RISING | Pin.IRQ_FALLING, handler=r.motors
 right_speed_sensor.irq(trigger=Pin.IRQ_RISING | Pin.IRQ_FALLING, handler=r.motors_controller.right_speed_sensor.process_event)
 
 # Register callbacks for line sensors
-left_tracking_sensor = Pin(21, Pin.IN, Pin.PULL_DOWN)
-center_tracking_sensor = Pin(22, Pin.IN, Pin.PULL_DOWN)
-right_tracking_sensor = Pin(23, Pin.IN, Pin.PULL_DOWN)
-left_tracking_sensor.irq(trigger=Pin.IRQ_RISING | Pin.IRQ_FALLING, handler=r.line_tracking.left_sensor_to_event)
-center_tracking_sensor.irq(trigger=Pin.IRQ_RISING | Pin.IRQ_FALLING, handler=r.line_tracking.center_sensor_to_event)
-right_tracking_sensor.irq(trigger=Pin.IRQ_RISING | Pin.IRQ_FALLING, handler=r.line_tracking.right_sensor_to_event)
+# left_tracking_sensor = Pin(21, Pin.IN, Pin.PULL_DOWN)
+# center_left_tracking_sensor = Pin(22, Pin.IN, Pin.PULL_DOWN)
+# center_right_tracking_sensor = Pin(23, Pin.IN, Pin.PULL_DOWN)
+# right_tracking_sensor = Pin(5, Pin.IN, Pin.PULL_DOWN)
+# left_tracking_sensor.irq(trigger=Pin.IRQ_RISING | Pin.IRQ_FALLING, handler=r.line_tracking.left_sensor_to_event)
+# center_left_tracking_sensor.irq(trigger=Pin.IRQ_RISING | Pin.IRQ_FALLING, handler=r.line_tracking.center_left_sensor_to_event)
+# center_right_tracking_sensor.irq(trigger=Pin.IRQ_RISING | Pin.IRQ_FALLING, handler=r.line_tracking.center_right_sensor_to_event)
+# right_tracking_sensor.irq(trigger=Pin.IRQ_RISING | Pin.IRQ_FALLING, handler=r.line_tracking.right_sensor_to_event)
 
 # Features configuration
 r.enable_adaptive_cruise_control(False)

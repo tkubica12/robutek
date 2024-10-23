@@ -69,7 +69,7 @@ class RightDetected(Event):
 
 class CenterLost(Event):
     """
-    Event is triggered when the center line is lost.
+    Event is triggered when the center line is lost by center left sensor.
     """
     pass
 
