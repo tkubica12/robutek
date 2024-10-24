@@ -28,12 +28,6 @@ class Stop(Event):
     """
     pass
 
-# class TurningFinished(Event):
-#     """
-#     Event is triggered when robot finishes turning
-#     """
-#     pass
-
 class DistanceReached(Event):
     """
     You can register alert so this event is triggered when set distance is reached.
@@ -69,7 +63,7 @@ class RightDetected(Event):
 
 class CenterLost(Event):
     """
-    Event is triggered when the center line is lost.
+    Event is triggered when the center line is lost by center left sensor.
     """
     pass
 

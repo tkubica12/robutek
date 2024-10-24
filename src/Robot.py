@@ -39,7 +39,7 @@ class Robot:
     def regulation_level2(self, timer=None):
         """
         Perform various regulation tasks on Level 2.
-        This should be 5x slower level, typically for higher level stuff such as cruise control or line trackinf.
+        This should be 5x slower level, typically for higher level stuff such as cruise control or line tracking.
         This is called periodically by the timer.
         """
         # Regulate speed with adaptive cruise control
@@ -47,8 +47,7 @@ class Robot:
             self.movement_controller.adaptive_cruise_control()
 
         # Regulate speed with line tracking
-        if self.follow_the_line_enabled:
-            self.line_tracking.correction_action()
+        self.line_tracking.regulation_action()
 
     def enable_adaptive_cruise_control(self, state: bool):
         self.adaptive_cruise_control_enabled = state
