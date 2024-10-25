@@ -17,6 +17,14 @@ path_actions = [
     PathAction.GO_STRAIGHT,
     PathAction.TURN_RIGHT, 
     PathAction.TURN_RIGHT, 
+    PathAction.GO_STRAIGHT,
+    PathAction.GO_STRAIGHT,
+    PathAction.TURN_LEFT, 
+    PathAction.TURN_LEFT, 
+    # PathAction.GO_STRAIGHT,
+    # PathAction.GO_STRAIGHT,
+    # PathAction.GO_STRAIGHT,
+    # PathAction.TURN_LEFT, 
     ]
 
 # Create instance of Robot

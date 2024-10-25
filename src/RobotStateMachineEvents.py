@@ -91,6 +91,12 @@ class Stopped(Event):
     """
     pass
 
+class ContinueMoving(Event):
+    """
+    Event is triggered when robot should continue moving.
+    """
+    pass
+
 # Emergency events
 class EmergencyEvent(Event):
     """

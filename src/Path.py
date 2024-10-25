@@ -18,8 +18,11 @@ class Path:
         self.path_actions.append(path_action)
 
     def next_action(self) -> PathAction:
-        if self.current_index < len(self.path_actions):
+        if self.current_index <= len(self.path_actions):
             action = self.path_actions[self.current_index]
             self.current_index += 1
             return action
         return None
+    
+    def is_next_action_go_forward(self) -> bool:
+        return self.path_actions[self.current_index] == PathAction.GO_STRAIGHT

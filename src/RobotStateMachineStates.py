@@ -122,7 +122,7 @@ class HandleCrossing(State):
             self.start_turning(self.turn_direction)
         elif next_action == PathAction.GO_STRAIGHT:
             self.robot.display.show_message("Going straight", 1)
-            self.move_over_cross()
+            self.robot.robot_state_machine.handle_event(ContinueMoving())
         else:  # No more actions left, stop
             self.robot.robot_state_machine.handle_event(NoPathActionsLeft())
 
@@ -156,7 +156,7 @@ class HandleCrossing(State):
                 return FollowTheLine(self.robot)
             else:
                 return self
-        elif isinstance(event, DistanceReached):  # Distance reached, moved over the cross
+        elif isinstance(event, ContinueMoving): 
             self.robot.display.show_message("", 1)
             self.robot.movement_controller.drive_desired_state(CONFIG["DEMO_FORWARD_SPEED"], Direction.FORWARD)
             return FollowTheLine(self.robot)
@@ -193,11 +193,11 @@ class CrossCentering(State):
             print("Entering CrossCentering State")
         # self.robot.line_tracking.center_to_cross()
         if self.robot.line_tracking.is_on_cross():
-            self.robot.line_tracking.display.show_message("Cross Centering", 2)
+            self.robot.line_tracking.display.show_message("Cross Centering", 0)
             self.robot.lights_controller.main_on()
             self.robot.line_tracking.center_to_cross()
         else:
-            self.robot.line_tracking.display.show_message("Cross overshoot", 2)
+            self.robot.line_tracking.display.show_message("Cross overshoot", 0)
             self.robot.lights_controller.reverse_on()
             self.robot.line_tracking.drive_back_to_cross()
 
@@ -223,7 +223,7 @@ class CrossStopping(State):
         if CONFIG["LOG_LEVEL"] >= 1:
             print("Entering CrossStopping State")
         self.robot.line_tracking.stop()
-        self.robot.line_tracking.display.show_message("Cross Stopping", 2)
+        self.robot.line_tracking.display.show_message("Cross Stopping", 0)
         self.robot.line_tracking.set_angular_velocity(0)
         self.robot.line_tracking.stop_regulation()
         self.robot.line_tracking.robot.enable_follow_the_line(False)
@@ -246,6 +246,8 @@ class CrossStopping(State):
 
     def handle_event(self, event):
         if isinstance(event, Stopped):
+            if self.robot.path.is_next_action_go_forward():  # Do not center on the cross if next action is to go forward
+                return HandleCrossing(self.robot)
             return CrossCentering(self.robot)
         return self
 
